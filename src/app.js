@@ -6,6 +6,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import redis from './config/redis.js';
+
 
 dotenv.config();
 
@@ -26,7 +28,6 @@ const rateLimitOptions = {
 };
 const limiter = rateLimit(rateLimitOptions);
 app.use(limiter);
-
 app.use(helmet());
 
 if (process.env.NODE_ENV === 'development') {

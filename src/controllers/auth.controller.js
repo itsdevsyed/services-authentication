@@ -15,12 +15,8 @@ const loginSchema = Joi.object({
   password: Joi.string().required(),
 });
 
-// @desc   Register a new user
-// @route  POST /api/auth/register
-// @access Public
 export const register = async (req, res) => {
   try {
-    // Validate request body
     const { error, value } = registerSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -103,7 +99,10 @@ export const login = async (req, res) => {
     }
 
     // Check password
+    const hashStart = Date.now();
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log("Bcrypt Verify Time:", Date.now() - hashStart, "ms");
+
     if (!isMatch) {
       return res.status(400).json({
         success: false,
@@ -136,6 +135,7 @@ export const login = async (req, res) => {
     });
   }
 };
+
 
 // @desc   Get current user
 // @route  GET /api/auth/me
