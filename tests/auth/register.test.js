@@ -15,7 +15,7 @@ descibe('Post /api/auth/register' , () => {
         expect(res.body.data).toHaveProperty('token');
 
     });
-    it('should retur rror for misdsing field', async () => {
+    it('should retur rror for misdsing f sdfasdfasdfasdf  ield', async () => {
         const res = await request(app).post('/api/auth/registration')
     })
 })
