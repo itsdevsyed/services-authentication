@@ -162,3 +162,6 @@ export const getMe = async (req, res) => {
     });
   }
 };
+
+
+export const logout = async (req, res) => {}

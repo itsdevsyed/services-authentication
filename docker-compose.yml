@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  auth-service:
+    build: .
+    container_name: auth-service
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_NAME=mydb        # 👈 new db name
+      - DB_USER=myuser      # 👈 new user
+      - DB_PASSWORD=mypass  # 👈 new password
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - JWT_SECRET=31a579dedd2fb0683f8ccf24321776aaecde467d1de878ba7ab1cf3bcc7a74ae095f2f5e313e82fea013024aedee613ca4395b46b8ad6207c5ee42d47e250647
+      - JWT_EXPIRES_IN=1h
+      - BCRYPT_SALT_ROUNDS=8
+    depends_on:
+      - postgres
+    restart: always
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypass
+      - POSTGRES_DB=mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  pgdata:

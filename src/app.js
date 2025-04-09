@@ -6,8 +6,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import redis from './config/redis.js';
-
 
 dotenv.config();
 
@@ -38,6 +36,8 @@ if (process.env.NODE_ENV === 'development') {
 } else {
   app.use(morgan('combined'));
 }
+redis();
+
 
 app.use(express.json());
 
