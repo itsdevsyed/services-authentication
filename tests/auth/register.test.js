@@ -15,7 +15,7 @@ descibe('Post /api/auth/register' , () => {
         expect(res.body.data).toHaveProperty('token');
 
     });
-    it('should return error for missing field', async () => {
+    it('should retur rror for missing field', async () => {
         const res = await request(app).post('/api/auth/registration')
     })
 })
