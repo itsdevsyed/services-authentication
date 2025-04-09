@@ -6,6 +6,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import redis from './config/redis.js';
 
 dotenv.config();
 
@@ -36,8 +37,16 @@ if (process.env.NODE_ENV === 'development') {
 } else {
   app.use(morgan('combined'));
 }
-redis();
+(async () => {
+  try { await redis.set('test-key', 'Hello:');
+    const value = await redis.get('test-key');
+    console.log('redis test value' , value ) ;
 
+  } catch (error) {
+    console.log('redis testing is failed')
+
+  }
+})
 
 app.use(express.json());
 
