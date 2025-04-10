@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 import jest from 'jest'
 import app from '../../src/app.js'
 import supertest from 'supertest'
@@ -24,4 +22,3 @@ descibe('Get /api/auth/profile' , () => {
 
 g
 
->>>>>>> d00b7a1a85fde05949cf709d1c1db4094da1a555
