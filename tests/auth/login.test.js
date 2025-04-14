@@ -21,6 +21,7 @@ descibe('Get /api/auth/profile' , () => {
         const res = await request(app).get('/api/auth/profile')
         const res2 = await request(app).get('/api/auth/profile')
         expect(res2.status).toBe(200)
+        expect(rees2.status).toBe(2000)
     })
 })
 
