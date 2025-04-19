@@ -1,50 +1,56 @@
 import jwt from 'jsonwebtoken';
+import redis from '../config/redis.js';
 import User from '../models/user.model.js';
 
-// Protect routes - verify JWT token
 export const protect = async (req, res, next) => {
   let token;
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    try {
-      // Get token from header
-      token = req.headers.authorization.split(' ')[1];
-      console.log("Extracted Token:", token); // ADD THIS LINE
+  try {
+    // Extract token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
 
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("Decoded Token:", decoded); // ADD THIS LINE
-
-      // Get user from token
-      const user = await User.findByPk(decoded.id, {
-        attributes: { exclude: ['password'] }, // Exclude password from the user object
-      });
-
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: "Not authorized, invalid token",
-        });
-      }
-
-      req.user = user; // Attach user to request
-      next();
-    } catch (error) {
-      console.error("JWT Verification Error:", error);  // ADD THIS LINE
+    if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Not authorized, token failed",
+        message: 'Not authorized, token missing',
       });
     }
-  }
 
-  if (!token) {
+    // Check if token is blacklisted
+    const isBlacklisted = await redis.get(`bl_${token}`);
+    if (isBlacklisted) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token has been logged out (blacklisted)',
+      });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Fetch user from DB
+    const user = await User.findByPk(decoded.id, {
+      attributes: { exclude: ['password'] },
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized, user not found',
+      });
+    }
+
+    req.user = user;
+    next();
+
+  } catch (error) {
+    console.error('Auth Error:', error);
     return res.status(401).json({
       success: false,
-      message: "Not authorized, no token",
+      message: 'Not authorized, token invalid or expired',
     });
   }
 };
