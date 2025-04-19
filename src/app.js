@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import redis from './config/redis.js';
+// import  { }  from './models/index.js';
 
 dotenv.config();
 
@@ -57,14 +58,12 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
+
+// await sequelize.sync({alter: true});
 sequelize
   .authenticate()
   .then(() => {
     console.log('Database connection has been established successfully.');
-    return sequelize.sync();
-  })
-  .then(() => {
-    console.log('Database connected and synced');
     app.listen(port, () => {
       console.log(`Server running on port ${port}`);
     });
