@@ -24,4 +24,9 @@ describe('Multiple Jest Tests in One File', () => {
       expect(isActive).toBe(true);
     });
 
+    test('null value should be null', () => {
+      const nullValue = null;
+      expect(nullValue).toBeNull();
+    });
+
   });
