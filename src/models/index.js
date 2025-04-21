@@ -13,5 +13,7 @@ RefreshToken.belongsTo(User, {
   foreignKey: 'user_id',
   as: 'user',
 });
+await sequelize.sync({ alter: true });
+
 
 export { sequelize, User, RefreshToken };

@@ -1,36 +1,40 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
-import User from './user.model.js'; // assuming user model is here
+import User from './user.model.js'; // Make sure this path is correct
 
 const RefreshToken = sequelize.define('RefreshToken', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
-    primaryKey: true
+    primaryKey: true,
   },
   user_id: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: false,
   },
   token: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    unique: true, // Optional: helps avoid duplicate tokens
   },
   expires_at: {
     type: DataTypes.DATE,
-    allowNull: false
+    allowNull: false,
   },
   revoked_at: {
     type: DataTypes.DATE,
-    allowNull: true
-  }
+    allowNull: true,
+  },
 }, {
   tableName: 'refresh_tokens',
   timestamps: true,
-  underscored: true // this will match snake_case in DB like `user_id`, `expires_at`
+  underscored: true, // snake_case fields like `user_id`
 });
 
-// Associate with user (optional but good practice)
-RefreshToken.belongsTo(User, { foreignKey: 'user_id' });
+// Association
+RefreshToken.belongsTo(User, {
+  foreignKey: 'user_id',
+  onDelete: 'CASCADE', // Optional: if you want to auto-delete tokens when a user is deleted
+});
 
 export default RefreshToken;

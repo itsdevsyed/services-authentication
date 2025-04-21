@@ -7,68 +7,70 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import redis from './config/redis.js';
-import  { RefreshToken }  from './models/index.js';
+import './models/index.js'; // Ensures all models (e.g., RefreshToken) are loaded
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// ✅ Security Middleware
+app.use(helmet());
 
+// ✅ CORS Setup
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true,
 };
 app.use(cors(corsOptions));
 
-const rateLimitOptions = {
+// ✅ Rate Limiting
+const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: 'Too many requests, please try again later.',
-};
-const limiter = rateLimit(rateLimitOptions);
+});
 app.use(limiter);
-app.use(helmet());
 
-if (process.env.NODE_ENV === 'development') {
-  const morganOptions = {
-    skip: (req, res) => res.statusCode < 400,
-  };
-  app.use(morgan('dev', morganOptions));
-} else {
-  app.use(morgan('combined'));
-}
-(async () => {
-  try { await redis.set('test-key', 'Hello:');
-    const value = await redis.get('test-key');
-    console.log('redis test value' , value ) ;
+// ✅ Logging (adjusted for prod)
+app.use(morgan('combined'));
 
-  } catch (error) {
-    console.log('redis testing is failed')
-
-  }
-})
-
+// ✅ Body Parser
 app.use(express.json());
 
+// ✅ Redis Test
+(async () => {
+  try {
+    await redis.set('test-key', 'Hello:');
+    const value = await redis.get('test-key');
+    console.log('Redis test value:', value);
+  } catch (error) {
+    console.error('Redis testing failed:', error.message);
+  }
+})();
+
+// ✅ Routes
 app.use('/api/auth', authRoutes);
 
+// ✅ Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
 });
 
-
-// await sequelize.sync({alter: true});
-sequelize
-  .authenticate()
+// ✅ Sync Models & Start Server
+sequelize.sync() // NO alter in prod unless you're intentionally updating
   .then(() => {
-    console.log('Database connection has been established successfully.');
+    console.log('Database synced!');
+    return sequelize.authenticate();
+  })
+  .then(() => {
+    console.log('Database connection established successfully.');
     app.listen(port, () => {
-      console.log(`Server running on port ${port}`);
+      console.log(`Production server running on port ${port}`);
     });
   })
   .catch((err) => {
-    console.error('Unable to connect to the database:', err);
+    console.error('Failed to sync/authenticate database:', err.message);
     process.exit(1);
   });
