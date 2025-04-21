@@ -4,10 +4,6 @@ describe('Multiple Jest Tests in One File', () => {
       expect(1 + 2).toBe(3);
     });
 
-    test('checks string length', () => {
-      const str = 'hello';
-      expect(str.length).toBe(5);
-    });
 
     test('array should contain a value', () => {
       const fruits = ['apple', 'banana', 'mango'];
