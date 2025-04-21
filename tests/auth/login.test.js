@@ -30,7 +30,6 @@ descibe('Post /api/auth/login' , () => {
     it('should return error for missing field', async () => {
         const res = await request(app).post('/api/auth/registration')
     })
-<<<<<<< HEAD
 })
 
 descibe('Get /api/auth/profile' , () => {
@@ -41,13 +40,5 @@ descibe('Get /api/auth/profile' , () => {
         expect(rees2.status).toBe(2000)
     })
 })
-
-
-
-
-
-=======
-} )
->>>>>>> 2d9a0dd3eb876aa7131a471f037f9e8ec3deb9c7
 
 

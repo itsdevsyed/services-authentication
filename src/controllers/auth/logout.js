@@ -1,41 +1,65 @@
-import User from "../../models/user.model.js";
-import jwt from 'jsonwebtoken'
-import redis from "../../config/redis.js";
-import RefreshToken  from '../../models/refreshToken.model.js';
+import RefreshToken from '../../models/refreshToken.model.js';
+import jwt from 'jsonwebtoken'; // ✅ Needed for decoding the access token
+
 
 export const logout = async (req, res) => {
+  try {
+    // Get refresh token from body or cookie
+    const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'No refresh token provided',
+      });
+    }
+
+    // Delete refresh token from DB
     try {
-        const { refreshToken } = req.body;
-        const authHeader = req.headers.authorization;
-        if(!authHeader || !authHeader.startsWith('Bearer')){
-            return res.status(401).json({ success: false, message: 'Not authorized, no token' });
-        }
-        const token = authHeader.split(' ')[1];
+      const deleted = await RefreshToken.destroy({ where: { token: refreshToken } });
+      if (deleted === 0) {
+        console.warn('Refresh token not found in database:', refreshToken);
+      }
+    } catch (dbError) {
+      console.error('Database error:', dbError);
+    }
 
-        const decoded = jwt.decode(token, process.env.JWT_SECRET);
-        if(!decoded ||!decoded.exp){
-            return res.status(400).json({ success: false, message: 'Invalid token' });
-        }
-        if(!refreshToken){
-            return res.status(400).json({ success: false, message: 'No refresh token provided' });
-        }
-        await RefreshToken.destroy({where:{token:refreshToken}})
-        console.error('till hee evertynig goes well ok ')
-        const expireIn = decoded.exp - Math.floor(Date.now() / 1000);
+    // Clear refresh token cookie
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
 
-        await redis.set(`bl_${token}`, expireIn, 'EX', expireIn);
+    // Blacklist access token if sent
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const accessToken = authHeader.split(' ')[1];
 
-        res.status(200).json({
-            success: true,
-            message: 'Logged out successfully'
-         });
+      try {
+        const decoded = jwt.decode(accessToken);
+        if (decoded?.exp) {
+          const expireIn = decoded.exp - Math.floor(Date.now() / 1000);
+          if (expireIn > 0) {
+            await redis.set(`bl_${accessToken}`, 'true', 'EX', expireIn);
+          }
+        }
+      } catch (redisError) {
+        console.error('Redis error:', redisError);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+    });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
+    console.error('[Logout Error]:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Server error',
+      message: 'Internal server error',
     });
   }
 };
-

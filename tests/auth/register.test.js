@@ -1,25 +1,34 @@
+import request from 'supertest';
+import app from '../app';
 
-import request from 'supertest'
-import app from '../../src/app.js'
+const testData = {
+  email: 'testuser@example.com',
+  password: 'TestPassword123',
+};
 
-descibe('Post /api/auth/register' , () => {
-    it('should register a user successfully', async()=> {
-        const res = await request(app).post('/api/auth/register') .send({
-            name:'Test User',
-            email:'test${date.now()}@example.com ',
-            pasword:'strongpassword',
-        });
-        expect(res.statusCode).tobe(201);
-        expect(res.body.success).tobe(true);
-        expect(res.body.data).toHaveProperty('user');
-        expect(res.body.data).toHaveProperty('token');
+describe('Login User', () => {
+  it('should login successfully with correct credentials', async () => {
+    const response = await request(app)
+      .post('/api/login')
+      .send({
+        email: testData.email,
+        password: testData.password,
+      });
 
-    });
-    it('should return error for missing field', async () => {
-        const res = await request(app).post('/api/auth/registration')
-    })
-})
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.token).toBeDefined();
+  });
 
+  it('should fail login with incorrect password', async () => {
+    const response = await request(app)
+      .post('/api/login')
+      .send({
+        email: testData.email,
+        password: 'WrongPassword',
+      });
 
-
-
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
+  });
+});

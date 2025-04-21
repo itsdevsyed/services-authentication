@@ -67,6 +67,14 @@ export const login = async (req, res) => {
         expires_at: refreshExpiresAt
       });
 
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        expires: refreshExpiresAt,
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+
     } catch (error) {
       console.error('Error creating refresh token:', error);  // Log detailed error
       return res.status(500).json({

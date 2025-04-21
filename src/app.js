@@ -7,7 +7,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import redis from './config/redis.js';
-// import  { }  from './models/index.js';
+import  { RefreshToken }  from './models/index.js';
 
 dotenv.config();
 

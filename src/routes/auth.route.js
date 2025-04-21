@@ -12,6 +12,6 @@ router.post('/register', register);
 router.post('/login', login);                    // 👈 Just login
 router.post('/refresh', refreshAccessToken);     // 👈 New route for refresh
 router.get('/profile', protect, profile);
-router.post('/logout', protect, logout);
+router.post('/logout', logout); // no protect
 
 export default router;
