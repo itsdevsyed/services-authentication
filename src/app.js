@@ -7,24 +7,21 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import redis from './config/redis.js';
-import './models/index.js'; // Ensures all models (e.g., RefreshToken) are loaded
+import './models/index.js';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// ✅ Security Middleware
 app.use(helmet());
 
-// ✅ CORS Setup
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true,
 };
 app.use(cors(corsOptions));
 
-// ✅ Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -32,13 +29,10 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// ✅ Logging (adjusted for prod)
 app.use(morgan('combined'));
 
-// ✅ Body Parser
 app.use(express.json());
 
-// ✅ Redis Test
 (async () => {
   try {
     await redis.set('test-key', 'Hello:');
@@ -49,7 +43,6 @@ app.use(express.json());
   }
 })();
 
-// ✅ Routes
 app.use('/api/auth', authRoutes);
 
 // ✅ Global Error Handler
@@ -58,8 +51,7 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
-// ✅ Sync Models & Start Server
-sequelize.sync() // NO alter in prod unless you're intentionally updating
+sequelize.sync() 
   .then(() => {
     console.log('Database synced!');
     return sequelize.authenticate();
