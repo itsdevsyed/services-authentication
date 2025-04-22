@@ -2,7 +2,7 @@
   "name": "authentication",
   "version": "1.0.0",
   "main": "src/app.js",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "test": "jest",
     "dev": "nodemon app.js",
