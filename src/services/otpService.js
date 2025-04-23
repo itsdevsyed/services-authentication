@@ -2,6 +2,7 @@
 import crypto from 'crypto';
 import EmailVerification from '../models/emailVerification.model.js';
 import User from '../models/user.model.js';
+import AppError from '../utils/AppError.js';
 
 const OTP_LENGTH = 6;
 const EXPIRATION_MINUTES = 10;
@@ -10,9 +11,9 @@ const IS_DEV = process.env.NODE_ENV !== 'production';
 
 export const generate = async (email) => {
   // 1) Find user
+
   const user = await User.findOne({ where: { email } });
   if (!user) throw new Error('User not found', 404);
-
   // 2) Create 6-digit code & hash
   const code = crypto.randomInt(0, 10 ** OTP_LENGTH)
                      .toString()

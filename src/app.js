@@ -1,69 +1,90 @@
+// server.js (development)
+
 import express from 'express';
 import dotenv from 'dotenv';
-import sequelize from './config/database.js';
-import authRoutes from './routes/auth.route.js';
-import cors from 'cors';
 import helmet from 'helmet';
+import cors from 'cors';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+
+import sequelize from './config/database.js';
 import redis from './config/redis.js';
-import './models/index.js';
+
+// Models (so Sequelize picks them up)
+import './models/user.model.js';
+import './models/emailVerification.model.js';
+
+import authRoutes from './routes/auth.route.js';
+import globalErrorHandler from './controllers/auth/errorController.js';
+import AppError from './utils/AppError.js';
+import logger from './utils/logger.js';
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
 
+// 1) Security & CORS
 app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    credentials: true,
+  })
+);
 
-const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true,
-};
-app.use(cors(corsOptions));
+// 2) Rate Limiting
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+    message: 'Too many requests, please try again later.',
+  })
+);
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests, please try again later.',
-});
-app.use(limiter);
+// 3) HTTP request logging → Winston
+app.use(
+  morgan('combined', {
+    stream: { write: (msg) => logger.info(msg.trim()) },
+  })
+);
 
-app.use(morgan('combined'));
-
+// 4) Body parser
 app.use(express.json());
 
+// 5) Redis health‑check (optional dev helper)
 (async () => {
   try {
-    await redis.set('test-key', 'Hello:');
-    const value = await redis.get('test-key');
-    console.log('Redis test value:', value);
-  } catch (error) {
-    console.error('Redis testing failed:', error.message);
+    await redis.set('healthcheck', 'ok');
+    const val = await redis.get('healthcheck');
+    logger.debug('Redis OK:', val);
+  } catch (err) {
+    logger.error('Redis error:', err);
   }
 })();
 
+// 6) Routes
 app.use('/api/auth', authRoutes);
 
-
-// ✅ Global Error Handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
+// 7) 404 for unmatched routes
+app.all('*', (req, res, next) => {
+  next(new AppError(`Cannot find ${req.originalUrl}`, 404));
 });
 
-sequelize.sync()
-  .then(() => {
-    console.log('Database synced!');
-    return sequelize.authenticate();
-  })
-  .then(() => {
-    console.log('Database connection established successfully.');
-    app.listen(port, () => {
-      console.log(`Production server running on port ${port}`);
-    });
-  })
-  .catch((err) => {
-    console.error('Failed to sync/authenticate database:', err.message);
+// 8) Global Error Handler
+app.use(globalErrorHandler);
+
+// 9) Start DB & Server
+(async () => {
+  try {
+    await sequelize.authenticate();
+    logger.info('DB authenticated');
+    await sequelize.sync({ alter: true }); // dev only
+    logger.info('DB synced (alter)');
+    app.listen(process.env.PORT || 3000, () =>
+      logger.info(`Server running on port ${process.env.PORT || 3000}`)
+    );
+  } catch (err) {
+    logger.error('Startup error:', err);
     process.exit(1);
-  });
+  }
+})();
