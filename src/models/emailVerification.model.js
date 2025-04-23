@@ -1,21 +1,24 @@
+// src/models/emailVerification.model.js
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 import User from './user.model.js';
 
-const RefreshToken = sequelize.define('RefreshToken', {
+const EmailVerification = sequelize.define('EmailVerification', {
   id: {
     type: DataTypes.INTEGER,
-    autoIncrement: true,
     primaryKey: true,
+    autoIncrement: true,
   },
   user_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: { model: 'users', key: 'id' },
+    onDelete: 'CASCADE',
   },
   token: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true, // Optional: helps avoid duplicate tokens
+    unique: true,
   },
   expires_at: {
     type: DataTypes.DATE,
@@ -26,12 +29,9 @@ const RefreshToken = sequelize.define('RefreshToken', {
     allowNull: true,
   },
 }, {
-  tableName: 'refresh_tokens',
+  tableName: 'email_verifications',
   timestamps: true,
-  underscored: true, // snake_case fields like `user_id`
+  underscored: true,
 });
 
-// Association
-
-
-export default RefreshToken;
+export default EmailVerification;

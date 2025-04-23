@@ -45,13 +45,14 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 
+
 // ✅ Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
 });
 
-sequelize.sync() 
+sequelize.sync()
   .then(() => {
     console.log('Database synced!');
     return sequelize.authenticate();
